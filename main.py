@@ -5,29 +5,31 @@ from io import BytesIO
 
 app = FastAPI()
 
-# ✔ Health check (Render + browser test)
+# ✔ Health check
 @app.get("/")
 def home():
     return {"status": "online"}
 
-# ✔ Image → pixel converter API
+# ✔ Image → pixel API (WITH QUALITY CONTROL)
 @app.get("/image")
-def image(url: str):
+def image(url: str, size: int = 32):
 
     try:
-        # Download image safely (fixes Imgur 429 issue)
+        # Fix blocked requests (Imgur / Bing / etc.)
         headers = {
             "User-Agent": "Mozilla/5.0"
         }
 
+        # Download image
         r = requests.get(url, headers=headers, timeout=10)
         r.raise_for_status()
 
         # Open image
         img = Image.open(BytesIO(r.content)).convert("RGB")
 
-        # Resize so Roblox doesn't lag
-        img = img.resize((32, 32))
+        # QUALITY CONTROL (THIS IS YOUR NEW FEATURE)
+        # size = 16 / 32 / 64 / 128 etc.
+        img = img.resize((size, size))
 
         pixels = []
 
@@ -35,12 +37,10 @@ def image(url: str):
         for y in range(img.height):
             row = []
             for x in range(img.width):
-                r, g, b = img.getpixel((x, y))
-                row.append([r, g, b])
+                row.append(list(img.getpixel((x, y))))
             pixels.append(row)
 
         return pixels
 
     except Exception as e:
-        # Return error instead of crashing server
         return {"error": str(e)}
