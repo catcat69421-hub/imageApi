@@ -13,21 +13,18 @@ def home():
 def image(url: str):
 
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
 
-        img = Image.open(BytesIO(response.content)).convert("RGB")
-        img = img.resize((32,32))
+        img = Image.open(BytesIO(r.content)).convert("RGB")
+        img = img.resize((32, 32))
 
         pixels = []
 
         for y in range(img.height):
             row = []
-
             for x in range(img.width):
-                r,g,b = img.getpixel((x,y))
-                row.append([r,g,b])
-
+                row.append(list(img.getpixel((x, y))))
             pixels.append(row)
 
         return pixels
